@@ -38,6 +38,7 @@
 
 #include <algorithm>
 #include <unordered_set>
+#include <cstdlib>
 
 #include "AbstractFastRouteRenderer.h"
 #include "DataType.h"
@@ -928,9 +929,22 @@ NetRouteMap FastRouteCore::run()
   // call FLUTE to generate RSMT and break the nets into segments (2-pin nets)
 
   via_cost_ = 0;
-  gen_brk_RSMT(false, false, false, false, noADJ);
-  routeLAll(true);
-  gen_brk_RSMT(true, true, true, false, noADJ);
+
+  const char* env_var = getenv("USE_MY_ALGORITHM");
+  bool use_my_algorithm;
+  if (env_var != nullptr) {
+    use_my_algorithm = atoi(env_var) > 0;
+  } else {
+    use_my_algorithm = false;
+  }
+
+  if (use_my_algorithm) {
+    gen_brk_CAREST();
+  } else {
+    gen_brk_RSMT(false, false, false, false, noADJ);
+    routeLAll(true);
+    gen_brk_RSMT(true, true, true, false, noADJ);
+  }
 
   getOverflow2D(&maxOverflow);
   newrouteLAll(false, true);

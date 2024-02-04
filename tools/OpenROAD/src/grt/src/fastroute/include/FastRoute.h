@@ -383,6 +383,7 @@ class FastRouteCore
                     const bool genTree,
                     const bool newType,
                     const bool noADJ);
+  void gen_brk_CAREST();
   void fluteNormal(const int netID,
                    const std::vector<int>& x,
                    const std::vector<int>& y,
@@ -505,6 +506,8 @@ class FastRouteCore
                            FrNet* net,
                            bool is3DVisualization);
   int netCount() const { return nets_.size(); }
+  void writeRSMTInputFile(const char* filename);
+  std::vector<Tree> readRSMTOutputFile(const char* filename);
 
   typedef std::tuple<int, int, int> Tile;
 

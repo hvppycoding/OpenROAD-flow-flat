@@ -193,7 +193,8 @@ class GlobalRouter : public ant::GlobalRouteSource
   std::vector<int> routeLayerLengths(odb::dbNet* db_net);
   void globalRoute(bool save_guides = false,
                    bool start_incremental = false,
-                   bool end_incremental = false);
+                   bool end_incremental = false,
+                   bool routability = true);
   void saveCongestion();
   NetRouteMap& getRoutes() { return routes_; }
   Net* getNet(odb::dbNet* db_net);
@@ -337,7 +338,8 @@ class GlobalRouter : public ant::GlobalRouteSource
   odb::Point getRectMiddle(const odb::Rect& rect);
   NetRouteMap findRouting(std::vector<Net*>& nets,
                           int min_routing_layer,
-                          int max_routing_layer);
+                          int max_routing_layer,
+                          bool routability = false);
   void print(GRoute& route);
   void reportLayerSettings(int min_routing_layer, int max_routing_layer);
   void reportResources();

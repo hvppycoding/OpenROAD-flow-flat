@@ -77,6 +77,7 @@ namespace grt {
 using boost::icl::interval;
 using utl::GRT;
 
+
 GlobalRouter::GlobalRouter()
     : logger_(nullptr),
       stt_builder_(nullptr),
@@ -246,7 +247,8 @@ bool GlobalRouter::haveRoutes()
 
 void GlobalRouter::globalRoute(bool save_guides,
                                bool start_incremental,
-                               bool end_incremental)
+                               bool end_incremental,
+                               bool routability)
 {
   if (start_incremental && end_incremental) {
     logger_->error(GRT,
@@ -281,7 +283,7 @@ void GlobalRouter::globalRoute(bool save_guides,
         reportResources();
       }
 
-      routes_ = findRouting(nets, min_layer, max_layer);
+      routes_ = findRouting(nets, min_layer, max_layer, routability);
     }
 
     updateDbCongestion();
@@ -394,13 +396,14 @@ void GlobalRouter::destroyNetWires()
 
 NetRouteMap GlobalRouter::findRouting(std::vector<Net*>& nets,
                                       int min_routing_layer,
-                                      int max_routing_layer)
+                                      int max_routing_layer,
+                                      bool routability)
 {
   NetRouteMap routes;
   if (!nets.empty()) {
     MakeWireParasitics builder(logger_, resizer_, sta_, db_->getTech(), this);
     fastroute_->setMakeWireParasiticsBuilder(&builder);
-    routes = fastroute_->run();
+    routes = fastroute_->run(routability);
     fastroute_->setMakeWireParasiticsBuilder(nullptr);
     addRemainingGuides(routes, nets, min_routing_layer, max_routing_layer);
     connectPadPins(routes);

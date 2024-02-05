@@ -859,6 +859,105 @@ void FastRouteCore::gen_brk_CAREST()
   }
 }
 
+void FastRouteCore::gen_brk_FLUTE(const bool reRoute,
+                                  const bool genTree)
+{
+  logger_->report("===== gen_brk_FLUTE =====");
+  Tree rsmt;
+  int numShift = 0;
+
+  int wl = 0;
+  int wl1 = 0;
+  int totalNumSeg = 0;
+
+  const int flute_accuracy = 2;
+
+  for (int i = 0; i < netCount(); i++) {
+    if (skipNet(i)) {
+      continue;
+    }
+
+    FrNet* net = nets_[i];
+
+    int d = net->getNumPins();
+
+    if (reRoute) {
+      // remove the est_usage due to the segments in this net
+      for (auto& seg : seglist_[i]) {
+        ripupSegL(&seg);
+      }
+    }
+
+    float coeffV = 1.0;
+
+    fluteNormal(
+        i, net->getPinX(), net->getPinY(), flute_accuracy, coeffV, rsmt);
+        
+    if (debug_->isOn() && debug_->steinerTree_
+        && net->getDbNet() == debug_->net_) {
+      steinerTreeVisualization(rsmt, net);
+    }
+
+    if (genTree) {
+      copyStTree(i, rsmt);
+    }
+
+    if (net->getNumPins() != rsmt.deg) {
+      d = rsmt.deg;
+    }
+
+    for (int j = 0; j < rsmt.branchCount(); j++) {
+      const int x1 = rsmt.branch[j].x;
+      const int y1 = rsmt.branch[j].y;
+      const int n = rsmt.branch[j].n;
+      const int x2 = rsmt.branch[n].x;
+      const int y2 = rsmt.branch[n].y;
+
+      wl += abs(x1 - x2) + abs(y1 - y2);
+
+      if (x1 != x2 || y1 != y2) {  // the branch is not degraded (a point)
+        // the position of this segment in seglist
+        seglist_[i].push_back(Segment());
+        auto& seg = seglist_[i].back();
+        if (x1 < x2) {
+          seg.x1 = x1;
+          seg.x2 = x2;
+          seg.y1 = y1;
+          seg.y2 = y2;
+        } else {
+          seg.x1 = x2;
+          seg.x2 = x1;
+          seg.y1 = y2;
+          seg.y2 = y1;
+        }
+
+        seg.netID = i;
+      }
+    }  // loop j
+
+    totalNumSeg += seglist_[i].size();
+
+    if (reRoute) {
+      // update the est_usage due to the segments in this net
+      newrouteL(
+          i,
+          RouteType::NoRoute,
+          true);  // route the net with no previous route for each tree edge
+    }
+  }  // loop i
+
+  debugPrint(logger_,
+             GRT,
+             "rsmt",
+             1,
+             "Wirelength: {}, Wirelength1: {}\nNumber of segments: {}\nNumber "
+             "of shifts: {}",
+             wl,
+             wl1,
+             totalNumSeg,
+             numShift);
+}
+
 void FastRouteCore::writeRSMTInputFile(const char* filename)
 {
   std::ofstream out(filename);

@@ -150,7 +150,7 @@ class FastRouteCore
       const interval<int>::type& last_tile_reduce_interval);
   void initBlockedIntervals(std::vector<int>& track_space);
   void initAuxVar();
-  NetRouteMap run();
+  NetRouteMap run(bool routability = false);
   int totalOverflow() const { return total_overflow_; }
   bool has2Doverflow() const { return has_2D_overflow_; }
   void updateDbCongestion();
@@ -384,6 +384,8 @@ class FastRouteCore
                     const bool newType,
                     const bool noADJ);
   void gen_brk_CAREST();
+  void gen_brk_FLUTE(const bool reRoute, 
+                     const bool genTree);
   void fluteNormal(const int netID,
                    const std::vector<int>& x,
                    const std::vector<int>& y,
@@ -617,6 +619,8 @@ class FastRouteCore
 
   std::set<std::pair<int, int>> h_used_ggrid_;
   std::set<std::pair<int, int>> v_used_ggrid_;
+
+  static bool routability_mode_;
 };
 
 }  // namespace grt

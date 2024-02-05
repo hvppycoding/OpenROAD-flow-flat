@@ -875,11 +875,12 @@ void FastRouteCore::updateDbCongestion()
   }
 }
 
-NetRouteMap FastRouteCore::run()
+NetRouteMap FastRouteCore::run(bool routability)
 {
   if (netCount() == 0) {
     return getRoutes();
   }
+  logger_->report("===== FastRouteCore::run =====");
 
   v_used_ggrid_.clear();
   h_used_ggrid_.clear();
@@ -930,17 +931,32 @@ NetRouteMap FastRouteCore::run()
 
   via_cost_ = 0;
 
-  const char* env_var = getenv("USE_MY_ALGORITHM");
-  bool use_my_algorithm;
-  if (env_var != nullptr) {
-    use_my_algorithm = atoi(env_var) > 0;
+  const char* env_var = getenv("STEINERTREE_ALGORITHM");
+  const int DEFAULT_ALGORITHM = 0;
+  const int FLUTE_ALGORITHM = 1;
+  const int REST_ALGORITHM = 2;
+  const int MY_ALGORITHM = 3;
+
+  int algorithm;
+  if (env_var == nullptr) {
+    algorithm = DEFAULT_ALGORITHM;
   } else {
-    use_my_algorithm = false;
+    algorithm = atoi(env_var);
   }
 
-  if (use_my_algorithm) {
+  if (routability) {
+    // Routability Estimation @NesterovSolve
+    gen_brk_RSMT(false, false, false, false, noADJ);
+    routeLAll(true);
+    gen_brk_RSMT(true, true, true, false, noADJ);
+  } else if (algorithm == FLUTE_ALGORITHM) {
+    gen_brk_FLUTE(false, false);
+    routeLAll(true);
+    gen_brk_FLUTE(true, true);
+  } else if (algorithm == REST_ALGORITHM || algorithm == MY_ALGORITHM) {
     gen_brk_CAREST();
   } else {
+    // Default
     gen_brk_RSMT(false, false, false, false, noADJ);
     routeLAll(true);
     gen_brk_RSMT(true, true, true, false, noADJ);

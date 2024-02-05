@@ -676,7 +676,7 @@ std::pair<bool, bool> RouteBase::routability()
 
   // reset
   resetRoutabilityResources();
-
+  
   return std::make_pair(true, true);
 }
 
